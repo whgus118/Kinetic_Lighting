@@ -1,0 +1,18 @@
+.kinetic-lamp-wrapper {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100%;             /* 부모 absolute 영역(100vh) 전체를 채움 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  cursor: grab;
+  pointer-events: auto;     /* 부모 lamp-wrap의 none을 덮어씌워 이벤트 복원 */
+}
+
+.kinetic-lamp-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}

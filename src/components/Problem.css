@@ -1,0 +1,243 @@
+/* ==========================================================================
+   1. 기본 레이아웃 & 히어로 섹션 절대 좌표 충돌 방어
+   ========================================================================== */
+.problem {
+  position: relative;
+  /* 6vh: 모바일 등 작은 화면에서의 최소 여백
+     9vw: 화면 크기에 따른 유동적인 중간값
+     38vh: 데스크톱 등 큰 화면에서의 최대 여백 (요청하신 값) */
+  margin-top: clamp(6vh, 16vw, 38vh);
+  
+  padding: 120px var(--section-padding-x) var(--section-padding-y);   
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5rem;
+  background-color: var(--color-bg-ivory, #F7F4F0);
+  z-index: 10;
+}
+
+.problem__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: center;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ── 라벨 ── */
+.problem__label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--color-accent-amber);
+  margin-bottom: 2.5rem;
+}
+
+.problem__label-num {
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.problem__label-divider {
+  width: 24px;
+  height: 1px;
+  background: var(--color-accent-amber);
+  opacity: 0.5;
+}
+
+/* ── 헤드라인 스머지 애니메이션 ── */
+.problem__headline {
+  font-size: var(--text-2xl);
+  color: var(--color-text-forest);
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+}
+
+.problem__line {
+  display: block;
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateX(-16px);
+  transition:
+    opacity 0.8s var(--ease-smooth),
+    filter 0.8s var(--ease-smooth),
+    transform 0.8s var(--ease-smooth);
+}
+
+.problem__line.visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateX(0);
+}
+
+/* ── 본문 ── */
+.problem__body {
+  font-size: var(--text-base);
+  line-height: 1.9;
+  color: var(--color-text-forest);
+  opacity: 0.7;
+  max-width: 440px;
+}
+
+.problem__body strong {
+  color: var(--color-text-forest);
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   2. 노이즈 인포그래픽 영역
+   ========================================================================== */
+.problem__noise {
+  position: relative;
+  padding: 3rem;
+}
+
+.problem__noise-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.problem__noise-item {
+  background: rgba(27, 43, 34, 0.04);
+  border: 1px solid rgba(27, 43, 34, 0.08);
+  border-radius: 4px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s var(--ease-smooth), transform 0.6s var(--ease-smooth);
+  transition-delay: var(--delay);
+}
+
+.problem__noise-item.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.problem__noise-item:hover {
+  background: rgba(226, 149, 67, 0.06);
+  border-color: rgba(226, 149, 67, 0.2);
+}
+
+.problem__noise-count {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  color: var(--color-text-forest);
+  line-height: 1;
+  font-family: var(--font-body);
+}
+
+.problem__noise-item:last-child {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+.problem__noise-item:last-child .problem__noise-count {
+  font-size: var(--text-3xl);
+  color: var(--color-accent-amber);
+}
+
+.problem__noise-unit {
+  font-size: var(--text-xs);
+  color: var(--color-accent-amber);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.problem__noise-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: var(--color-text-forest);
+  opacity: 0.45;
+  font-weight: 500;
+}
+
+.problem__pixel-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.problem__pixel {
+  position: absolute;
+  left: var(--px);
+  top: var(--py);
+  width: 3px;
+  height: 3px;
+  background: var(--color-text-forest);
+  opacity: 0.08;
+  border-radius: 1px;
+  animation: pixel-flicker var(--pd) ease-in-out infinite;
+  animation-delay: var(--pd);
+}
+
+@keyframes pixel-flicker {
+  0%, 100% { opacity: 0.05; transform: scale(var(--ps)); }
+  50% { opacity: 0.2; transform: scale(calc(var(--ps) * 1.5)); }
+}
+
+/* ==========================================================================
+   3. 하단 전환 텍스트 & 반응형 레이아웃 방어
+   ========================================================================== */
+.problem__transition {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.problem__transition p {
+  font-family: var(--font-title);
+  font-size: var(--text-lg);
+  color: var(--color-text-forest);
+  opacity: 0.6;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.problem__transition-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(27, 43, 34, 0.15);
+}
+
+/* ── 반응형 미디어 쿼리 ── */
+@media (max-width: 960px) {
+  .problem {
+    margin-top: 10vh; 
+  }
+
+  .problem__inner {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .problem__transition p { white-space: normal; }
+}
+
+@media (max-width: 768px) {
+  .problem__noise { padding: 1rem 0; }
+  .problem__noise-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .problem__transition { flex-direction: column; gap: 1rem; }
+  .problem__transition-line { width: 100%; height: 1px; }
+}

@@ -1,0 +1,298 @@
+/* ==========================================================================
+   1. 디자인 시스템 변수 상속 및 기본 레이아웃 
+   ========================================================================== */
+.hero {
+  position: relative;
+  width: 100%;
+  /* 💡 첫 화면은 정확히 100vh로 고정하여 진입 시 스크롤 튕김 버그를 완벽히 차단합니다. */
+  height: 100vh;
+  background-color: var(--color-bg-ivory, #F7F4F0);
+  
+  display: flex;
+  align-items: center; /* 💡 좌측 텍스트 콘텐츠는 첫 화면(100vh)의 수직 정중앙에 단정하게 고정 */
+  padding-left: 8%;
+  box-sizing: border-box;
+}
+
+/* ── ImageTrail 레이어: hero 전체를 덮고 z-index로 정확히 층위 조정 ── */
+.hero__trail-layer {
+  position: fixed;     /* 💡 fixed로 설정하여 스크롤 이동 중에도 뷰포트 내 최상단에 안정적으로 이미지가 뜨도록 함 */
+  inset: 0;
+  z-index: 3;          /* 비디오(1), 텍스트(2) 위에서 이미지 떠다님 */
+  pointer-events: none; /* 기본은 투과 */
+  overflow: hidden;
+}
+
+/* 트레일 컨테이너 자체도 이벤트를 투과시키도록 설정하여 아래에 위치한 버튼/텍스트의 호버 및 클릭을 가로막지 않습니다. */
+.hero__trail-layer .content {
+  pointer-events: none;
+  overflow: visible;    /* 이미지가 영역 밖으로 넘어갈 수 있도록 */
+}
+
+/* ==========================================================================
+   2. 비디오 프레임: 순정 너비(65%) & Y축 하단 컷팅 연출 & 10% 우측 컷팅
+   ========================================================================== */
+.hero__video-frame {
+  /* 💡 [순정 위치 고정] 우측 absolute 배치를 완벽히 유지합니다. */
+  position: absolute;
+  right: 0;
+  
+  /* 💡 [핵심] 첫 화면의 top 기준 45vh 지점에서 시작하도록 세팅하여, 
+        동영상의 하단 일부가 100vh 경계선 아래로 자연스럽게 삐져나가도록 유도합니다. */
+  top: 45vh; 
+  z-index: 1;
+  
+  /* 💡 [순정 너비 유지] 요청하신 대로 원래의 너비인 65%를 정확하게 고수합니다. */
+  width: 65%;
+  height: auto;
+  aspect-ratio: 16 / 9; 
+  
+  /* 우측 10% 컷팅 레이아웃 유지 */
+  clip-path: inset(0 10% 0 0);
+  
+  /* 진입 대기 상태 (순정 모션 수치 유지) */
+  transform: translate3d(40px, 80px, 0) scale(1.02); 
+  opacity: 0;
+  
+  /* 2.4초 동기화 속도 유지 */
+  transition: 
+    transform 2.4s cubic-bezier(0.16, 1, 0.3, 1), 
+    opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 진입 성공 시 정위치 안착 */
+.hero__video-frame.is-playing {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.hero__video-core {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* 영상 원본 비율 온전히 표현 */
+}
+
+.hero__video-tint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* 스크롤로 내려갈 때 배경색과 자연스럽게 녹아들도록 틴트 밸런스 조정 */
+  background: linear-gradient(to right, var(--color-bg-ivory, #F7F4F0) 0%, transparent 25%),
+              linear-gradient(to bottom, var(--color-bg-ivory, #F7F4F0) 0%, transparent 30%);
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   3. 거대하게 오버레이되는 텍스트 및 콘텐츠 영역
+   ========================================================================== */
+.hero__content-wrap {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.hero__content-wrap * {
+  pointer-events: auto;
+}
+
+/* 라벨 스타일 톤 이식 버전 유지 */
+.hero__brand-tag {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-body, 'Pretendard', sans-serif);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: var(--color-accent-amber, #E29543);
+  margin-bottom: 2.5rem;
+}
+
+.hero__main-title {
+  font-family: var(--font-title, 'Iropke Batang', serif);
+  font-size: clamp(2.8rem, 5.2vw, 5.8rem);
+  line-height: 1.2;
+  color: var(--color-text-forest, #1B2B22);
+  margin: 0 0 3.5rem 0;
+  font-weight: 400;
+}
+
+.hero__main-title--accent {
+  color: var(--color-accent-amber, #E29543);
+  display: block;
+  margin-top: 0.6rem;
+}
+
+.hero__bottom-group {
+  max-width: 520px;
+}
+
+.hero__pitch-text {
+  font-family: var(--font-body, 'Pretendard', sans-serif);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--color-text-forest, #1B2B22);
+  opacity: 0.7;
+  margin-bottom: 2.5rem;
+}
+
+.hero__action-row {
+  display: flex;
+  gap: 16px;
+}
+
+.btn-levite {
+  padding: 14px 30px;
+  font-family: var(--font-body, 'Pretendard', sans-serif);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.btn-levite--primary {
+  background-color: var(--color-text-forest, #1B2B22);
+  color: var(--color-bg-ivory, #F7F4F0);
+}
+
+.btn-levite--primary:hover {
+  background-color: var(--color-accent-amber, #E29543);
+  box-shadow: 0 10px 25px rgba(226, 149, 67, 0.25);
+  transform: translateY(-2px);
+}
+
+.btn-levite--ghost {
+  border: 1px solid rgba(27, 43, 34, 0.3);
+  color: var(--color-text-forest, #1B2B22);
+}
+
+.btn-levite--ghost:hover {
+  background-color: rgba(27, 43, 34, 0.05);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   4. 페이지 진입 모션
+   ========================================================================== */
+.cinematic-fade-in {
+  opacity: 0;
+  filter: blur(12px);
+  letter-spacing: 0.15em;
+  transform: scale(1.02);
+  
+  transition: 
+    opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 2.4s cubic-bezier(0.16, 1, 0.3, 1),
+    letter-spacing 2.4s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 2.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cinematic-fade-in.visible {
+  opacity: 1;
+  filter: blur(0);
+  letter-spacing: -0.02em;
+  transform: scale(1);
+}
+
+.hero__brand-tag.cinematic-fade-in.visible {
+  letter-spacing: 0.15em;
+}
+
+.cinematic-fade-up {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0);
+  
+  transition: 
+    opacity 2.4s cubic-bezier(0.16, 1, 0.3, 1), 
+    transform 2.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cinematic-fade-up.visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ==========================================================================
+   5. 좌측 세로 스크롤 가이드 라인 (화면 전체 고정 및 팔로우)
+   ========================================================================== */
+.hero__scroll-indicator {
+  position: fixed;
+  left: 2.5%;
+  bottom: 8%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  z-index: 99; 
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+
+.hero__scroll-text {
+  font-family: var(--font-body, 'Pretendard', sans-serif);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  writing-mode: vertical-lr;
+  color: var(--color-text-forest, #1B2B22);
+  opacity: 0.4;
+}
+
+.hero__scroll-line {
+  width: 1px;
+  height: 60px;
+  background-color: var(--color-text-forest, #1B2B22);
+  opacity: 0.2;
+}
+
+/* ==========================================================================
+   6. 모바일 해상도 방어
+   ========================================================================== */
+@media (max-width: 768px) {
+  .hero {
+    padding-left: 5%;
+    align-items: flex-start;
+    height: auto;
+    min-height: 100vh;
+  }
+  
+  .hero__video-frame {
+    position: relative;
+    top: auto;
+    right: 0;
+    width: 100%; 
+    height: 45%; 
+    aspect-ratio: auto;
+    clip-path: none;
+    transform: translate3d(0, 50px, 0) scale(1);
+  }
+  
+  .hero__video-frame.is-playing {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .hero__video-tint {
+    background: linear-gradient(to bottom, var(--color-bg-ivory, #F7F4F0) 0%, transparent 40%);
+  }
+
+  .hero__content-wrap {
+    padding-top: 12vh;
+    max-width: 90%;
+  }
+
+  .hero__main-title {
+    font-size: 2.3rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero__scroll-indicator {
+    display: none;
+  }
+}

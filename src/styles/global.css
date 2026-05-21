@@ -1,0 +1,186 @@
+/* ============================================
+   레비테 디자인 시스템 — global.css
+   PRD v1.4_Final 기반
+============================================ */
+
+:root {
+  /* ── 색상 시스템 ── */
+  --color-bg-ivory: #F7F4F0;
+  --color-text-forest: #1B2B22;
+
+  --color-bg-abyss: #0D1310;
+  --color-text-sage: #D1DCD6;
+
+  --color-accent-amber: #E29543;
+  --color-accent-amber-glow: rgba(226, 149, 67, 0.35);
+  --color-accent-amber-soft: rgba(226, 149, 67, 0.15);
+
+  /* ── 타이포그래피 ── */
+  --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-title: 'Noto Serif KR', 'Georgia', serif;
+
+  /* ── 폰트 크기 스케일 (최소 12px 준수) ── */
+  --text-xs: clamp(0.75rem, 1vw, 0.875rem);      /* 12~14px */
+  --text-sm: clamp(0.875rem, 1.2vw, 1rem);        /* 14~16px */
+  --text-base: clamp(1rem, 1.5vw, 1.125rem);      /* 16~18px */
+  --text-lg: clamp(1.125rem, 2vw, 1.375rem);      /* 18~22px */
+  --text-xl: clamp(1.375rem, 3vw, 2rem);          /* 22~32px */
+  --text-2xl: clamp(2rem, 5vw, 3.5rem);           /* 32~56px */
+  --text-3xl: clamp(2.5rem, 7vw, 5rem);           /* 40~80px */
+
+  /* ── 간격 시스템 ── */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 8rem;
+
+  /* ── 접근성 ── */
+  --min-touch-target: 44px;
+
+  /* ── 트랜지션 ── */
+  --ease-smooth: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
+  --transition-slow: 0.8s var(--ease-smooth);
+  --transition-base: 0.5s var(--ease-smooth);
+  --transition-fast: 0.3s var(--ease-out);
+
+  /* ── 레이아웃 ── */
+  --container-max: 1280px;
+  --section-padding-x: clamp(1.5rem, 5vw, 6rem);
+  --section-padding-y: clamp(5rem, 10vw, 10rem);
+}
+
+/* ── 리셋 ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+  scrollbar-gutter: stable; /* 💡 스크롤바 유무에 따른 우측 레이아웃 밀림(Layout Shift) 방지 */
+  background-color: var(--color-bg-ivory);
+  transition: background-color 0.8s ease; /* 💡 다크모드 진입 애니메이션(0.8s)과 완벽 통일 */
+}
+
+html.dark-mode {
+  background-color: var(--color-bg-abyss);
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg-ivory);
+  color: var(--color-text-forest);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  line-height: 1.7;
+  cursor: none;
+}
+
+/* 모바일에서는 기본 커서 복원 */
+@media (max-width: 768px) {
+  body { cursor: auto; }
+}
+
+/* ── 공통 섹션 클래스 ── */
+.section-light {
+  background-color: var(--color-bg-ivory);
+  color: var(--color-text-forest);
+}
+
+.section-dark {
+  background-color: var(--color-bg-abyss);
+  color: var(--color-text-sage);
+}
+
+/* 다크 모드 명조체 타들어감 방지 */
+.section-dark .title-serif,
+.section-dark h1,
+.section-dark h2 {
+  font-family: var(--font-title);
+  text-shadow: 0 0 1px var(--color-text-sage);
+}
+
+/* ── 컨테이너 ── */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--section-padding-x);
+}
+
+/* ── 공통 섹션 패딩 ── */
+.section-wrap {
+  padding: var(--section-padding-y) var(--section-padding-x);
+}
+
+/* ── 타이포그래피 공통 ── */
+.title-serif {
+  font-family: var(--font-title);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.title-sans {
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ── 유틸리티 ── */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 진입 애니메이션 공통 ── */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity var(--transition-slow);
+}
+
+.fade-in.visible {
+  opacity: 1;
+}
+
+/* ── 스크롤바 커스텀 ── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-bg-ivory);
+  transition: background-color 0.8s ease; /* 💡 다크모드 진입 애니메이션(0.8s)과 완벽 통일 */
+}
+
+html.dark-mode ::-webkit-scrollbar-track {
+  background-color: var(--color-bg-abyss);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent-amber);
+  border-radius: 2px;
+}
