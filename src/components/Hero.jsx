@@ -49,7 +49,7 @@ export default function Hero() {
         aria-hidden="true"
       >
         <video className="hero__video-core" autoPlay muted loop playsInline>
-          <source src="/videos/Warm_lighting.mp4" type="video/mp4" />
+          <source src={`${import.meta.env.BASE_URL}videos/Warm_lighting.mp4`} type="video/mp4" />
         </video>
         <div className="hero__video-tint" />
       </div>
