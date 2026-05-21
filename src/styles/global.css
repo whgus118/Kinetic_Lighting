@@ -1,7 +1,7 @@
 /* ============================================
    레비테 디자인 시스템 — global.css
    PRD v1.4_Final 기반
-============================================ */
+ ============================================ */
 
 :root {
   /* ── 색상 시스템 ── */
@@ -17,7 +17,7 @@
 
   /* ── 타이포그래피 ── */
   --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-title: 'Noto Serif KR', 'Georgia', serif;
+  --font-title: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* ── 폰트 크기 스케일 (최소 12px 준수) ── */
   --text-xs: clamp(0.75rem, 1vw, 0.875rem);      /* 12~14px */
@@ -79,6 +79,8 @@ body {
   overflow-x: hidden;
   line-height: 1.7;
   cursor: none;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 모바일에서는 기본 커서 복원 */
@@ -121,9 +123,10 @@ body {
 /* ── 타이포그래피 공통 ── */
 .title-serif {
   font-family: var(--font-title);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.35;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.01em; /* Light 서체 규격에 따른 자간 조정 */
+  word-break: keep-all;
 }
 
 .title-sans {

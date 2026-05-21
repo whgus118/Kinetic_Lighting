@@ -1,24 +1,26 @@
-import { useEffect, useRef, useState } from 'react';
-import './Problem.css';
-import CountUp from './CountUp';
-import DecryptedText from './DecryptedText';
+import { useEffect, useRef, useState } from "react";
+import "./Problem.css";
+import CountUp from "./CountUp";
+import DecryptedText from "./DecryptedText";
 
 const LINES = [
-  '오늘 하루, 당신의 눈이 견뎌낸',
-  '타임라인은 몇 번의 깜빡임이었나요?',
+  "오늘 하루, 당신의 눈이",
+  "견뎌낸 타임라인은",
+  "몇 번의 깜빡임이었나요?",
 ];
 
 const NOISE_ITEMS = [
-  { label: 'EMAILS', count: 247, suffix: '', unit: '통' },
-  { label: 'SLACK', count: 1.2, suffix: 'K', unit: '알림' },
-  { label: 'MEETINGS', count: 6.5, suffix: '', unit: '시간' },
-  { label: 'SCREENS', count: 11.4, suffix: '', unit: '인치' },
-  { label: 'REFRESH', count: '∞', suffix: '', unit: '회' },
+  { label: "EMAILS", count: 247, suffix: "", unit: "통" },
+  { label: "SLACK", count: 1.2, suffix: "K", unit: "알림" },
+  { label: "MEETINGS", count: 6.5, suffix: "", unit: "시간" },
+  { label: "SCREENS", count: 11.4, suffix: "", unit: "인치" },
+  { label: "REFRESH", count: "∞", suffix: "", unit: "회" },
 ];
 
 export default function Problem() {
   const [finishedCount, setFinishedCount] = useState(0);
-  const [noiseItemsTransitionFinished, setNoiseItemsTransitionFinished] = useState(false);
+  const [noiseItemsTransitionFinished, setNoiseItemsTransitionFinished] =
+    useState(false);
   const sectionRef = useRef(null);
   const linesRef = useRef([]);
 
@@ -32,33 +34,41 @@ export default function Problem() {
             // 문장 줄 단위 페이드인
             linesRef.current.forEach((el, i) => {
               if (el) {
-                setTimeout(() => el.classList.add('visible'), i * 220);
+                setTimeout(() => el.classList.add("visible"), i * 220);
               }
             });
             // 노이즈 아이템 순차 진입
-            const noiseItems = document.querySelectorAll('.problem__noise-item');
+            const noiseItems = document.querySelectorAll(
+              ".problem__noise-item",
+            );
             noiseItems.forEach((el, i) => {
-              setTimeout(() => {
-                if (el) el.classList.add('visible');
-              }, 600 + i * 120);
+              setTimeout(
+                () => {
+                  if (el) el.classList.add("visible");
+                },
+                600 + i * 120,
+              );
             });
 
             // 마지막 노이즈 아이템이 완전히 올라왔을 때(트랜지션 완료 시) 하단 질문 실행 상태 활성화
             const lastItem = noiseItems[noiseItems.length - 1];
             if (lastItem) {
               const handleTransitionEnd = (e) => {
-                if (e.propertyName === 'transform') {
+                if (e.propertyName === "transform") {
                   setNoiseItemsTransitionFinished(true);
-                  lastItem.removeEventListener('transitionend', handleTransitionEnd);
+                  lastItem.removeEventListener(
+                    "transitionend",
+                    handleTransitionEnd,
+                  );
                 }
               };
-              lastItem.addEventListener('transitionend', handleTransitionEnd);
+              lastItem.addEventListener("transitionend", handleTransitionEnd);
             }
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.25 }
+      { threshold: 0.25 },
     );
 
     if (sectionRef.current) observer.observe(sectionRef.current);
@@ -95,9 +105,10 @@ export default function Problem() {
 
           <p className="problem__body fade-in-up">
             마감 시간, 메시지 알림, 눈부신 모니터 빛.
-            <br /><br />
-            우리는 매일 수천 가지 디지털 자극 속에서
-            자신도 모르게 무감각해져 갑니다.
+            <br />
+            <br />
+            우리는 매일 수천 가지 디지털 자극 속에서 자신도 모르게 무감각해져
+            갑니다.
           </p>
         </div>
 
@@ -108,10 +119,10 @@ export default function Problem() {
               <div
                 key={i}
                 className="problem__noise-item"
-                style={{ '--delay': `${i * 0.12}s` }}
+                style={{ "--delay": `${i * 0.12}s` }}
               >
                 <span className="problem__noise-count">
-                  {typeof item.count === 'number' ? (
+                  {typeof item.count === "number" ? (
                     <>
                       <CountUp
                         from={0}
@@ -119,7 +130,7 @@ export default function Problem() {
                         duration={1.5}
                         delay={0.6 + i * 0.12}
                         className="count-up-text"
-                        onEnd={() => setFinishedCount(prev => prev + 1)}
+                        onEnd={() => setFinishedCount((prev) => prev + 1)}
                       />
                       {item.suffix}
                     </>
@@ -140,10 +151,10 @@ export default function Problem() {
                 key={i}
                 className="problem__pixel"
                 style={{
-                  '--px': `${Math.random() * 100}%`,
-                  '--py': `${Math.random() * 100}%`,
-                  '--pd': `${Math.random() * 3}s`,
-                  '--ps': `${0.4 + Math.random() * 0.6}`,
+                  "--px": `${Math.random() * 100}%`,
+                  "--py": `${Math.random() * 100}%`,
+                  "--pd": `${Math.random() * 3}s`,
+                  "--ps": `${0.4 + Math.random() * 0.6}`,
                 }}
               />
             ))}

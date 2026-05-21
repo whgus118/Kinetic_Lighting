@@ -52,7 +52,6 @@
   font-size: 1.6rem;
   line-height: 1;
   color: var(--color-accent-amber);
-  animation: logo-spin 20s linear infinite;
 }
 
 @keyframes logo-spin {

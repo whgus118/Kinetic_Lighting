@@ -116,15 +116,18 @@
 }
 
 .hero__main-title {
-  font-family: var(--font-title, 'Iropke Batang', serif);
+  font-family: var(--font-title, 'Pretendard', sans-serif);
   font-size: clamp(2.8rem, 5.2vw, 5.8rem);
   line-height: 1.2;
   color: var(--color-text-forest, #1B2B22);
   margin: 0 0 3.5rem 0;
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .hero__main-title--accent {
+  font-family: var(--font-title, 'Pretendard', sans-serif);
+  font-weight: 500;
+  letter-spacing: inherit;
   color: var(--color-accent-amber, #E29543);
   display: block;
   margin-top: 0.6rem;
