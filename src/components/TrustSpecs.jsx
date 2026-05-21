@@ -24,7 +24,7 @@ export default function TrustSpecs() {
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
-
+  // ㅇ
   return (
     <section
       ref={sectionRef}
