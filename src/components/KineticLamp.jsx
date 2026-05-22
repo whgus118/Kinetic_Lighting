@@ -38,24 +38,9 @@ function createLanyardTexture() {
   return tex;
 }
 
-/* ── 빛 원뿔 페이드 텍스잘: apex(위) → base(아래) 흰→검 alphaMap ── */
-function createConeGradientTexture() {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  // canvas Y=0 → UV V=1(apex, 래프 위쪽) → 는림한 흩(opaque)
-  // canvas Y=127 → UV V=0(base, 아래끝) → 검정(transparent)
-  const grad = ctx.createLinearGradient(0, 0, 0, 128);
-  grad.addColorStop(0,    '#ffffff'); // apex: visible
-  grad.addColorStop(0.55, '#cccccc'); // 중간: 조금 흙해짐
-  grad.addColorStop(1,    '#000000'); // base: 완전 투명
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 1, 128);
-  return new THREE.CanvasTexture(canvas);
-}
+
 /* ── 조명 갓 3D 메시 ── */
-function LampShade({ dragged, hovered, onPointerOver, onPointerOut, onPointerDown, onPointerUp }) {
+function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPointerOut, onPointerDown, onPointerUp }) {
   const groupRef = useRef();
   const innerRef = useRef();
   const lightRef = useRef();
@@ -82,41 +67,159 @@ function LampShade({ dragged, hovered, onPointerOver, onPointerOut, onPointerDow
     return new THREE.TorusGeometry(0.55, 0.02, 8, 32);
   }, []);
 
-  // 빛 투사 원뿔
+  // 💡 [대체] 빛 투사 원뿔대 (Cylinder) - 상단 반지름을 수축하여 갓 하단 구멍(반지름 1.0) 안쪽에 완벽 밀착
   const coneGeom = useMemo(() => {
-    return new THREE.ConeGeometry(2.2, 3.0, 32, 1, true);
+    return new THREE.CylinderGeometry(0.4, 2.1, 3.0, 32, 1, true);
   }, []);
 
-  // 빛 원뿔 그라디언트 alphaMap (apex=낙담 → base=투명)
-  const coneTex = useMemo(() => createConeGradientTexture(), []);
+  // 💡 [대체] 기존의 정적 텍스처를 걷어내고, 3D 원뿔에 입체적으로 동작하는 커스텀 셰이더 재질 정의
+  const rayShaderMaterial = useMemo(() => {
+    return new THREE.ShaderMaterial({
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표 전달
+        void main() {
+          vUv = uv;
+          vPosition = position;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vViewPosition = -mvPosition.xyz;
+          vNormal = normalMatrix * normal;
+          gl_Position = projectionMatrix * mvPosition;
+        }
+      `,
+      fragmentShader: `
+        precision highp float;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        varying vec3 vViewPosition;
+        varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표
 
-  // 호버 시 글로우·라이트·스케일 부드럽게 전환
-  useFrame((_, delta) => {
+        uniform float uTime;
+        uniform vec3 uColor;
+        uniform float uHovered;
+        uniform float uActivated; // 다크모드 활성화 점등 유니폼
+
+        // 의사 난수 2D 노이즈 유틸리티
+        float rand(vec2 co) {
+          return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
+        }
+
+        float noise(vec2 st) {
+          vec2 i = floor(st);
+          vec2 f = fract(st);
+          float a = rand(i);
+          float b = rand(i + vec2(1.0, 0.0));
+          float c = rand(i + vec2(0.0, 1.0));
+          float d = rand(i + vec2(1.0, 1.0));
+          vec2 u = f*f*(3.0-2.0*f);
+          return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+
+        void main() {
+          // 1. [꼭짓점 및 바닥 양방향 부드러운 감쇠]
+          // 원뿔대 상단(Y=1.0)과 바닥(Y=0.0) 양끝을 솜사탕처럼 스무스하게 뭉개어 이음새 경계를 완벽히 지웁니다.
+          // 꼭짓점 부근(Y=1.0) 감쇠 범위를 0.65까지 깊게 조절하여 갓 안쪽으로 들어갈수록 은은히 사라지게 합니다.
+          float heightFade = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
+
+          // 2. [전체 볼륨 두께 복원 - 프레넬 감쇠 지수 대폭 완화]
+          // 빛 실린더 외곽 옆면 테두리가 너무 얇게 쪼그라드는 현상을 완벽히 해결하기 위해
+          // 프레넬 감쇠 지수를 1.5로 낮추어, 풍성한 안개 기둥의 전체 3D 덩어리감을 완전히 확보합니다.
+          vec3 normal = normalize(vNormal);
+          vec3 viewDir = normalize(vViewPosition);
+          float edgeFade = pow(abs(dot(normal, viewDir)), 1.5); 
+
+          // 3. [이음새 세로선 해결 - 3D 로컬 공간 회전 왜곡 왜용]
+          // UV 경계면 끊김 현상(세로줄)을 해결하기 위해 3D 로컬 좌표에 직접 회전 왜곡을 주어 파동을 연산합니다.
+          // Y축 높이에 따라 리드미컬하게 비틀어지는 나선형 왜곡 계산
+          float distortionFactor = 0.3 * sin(uTime * 1.2 + vPosition.y * 3.0) * (1.0 - vUv.y);
+          float cosD = cos(distortionFactor);
+          float sinD = sin(distortionFactor);
+          
+          vec2 rotPos = vec2(
+            vPosition.x * cosD - vPosition.z * sinD,
+            vPosition.x * sinD + vPosition.z * cosD
+          );
+
+          float speed = uTime * 0.45;
+          float wave1 = sin(rotPos.x * 2.8 + speed) * 0.5 + 0.5;
+          float wave2 = cos(rotPos.y * 3.2 - speed * 0.6) * 0.5 + 0.5;
+          float wave3 = noise(vec2(rotPos.x * 2.0 - speed * 0.2, vPosition.y * 1.5)) * 0.6;
+          
+          float rawRay = wave1 * 0.36 + wave2 * 0.36 + wave3 * 0.28;
+          
+          // [노이즈 평탄화] smoothstep의 쨍한 얼룩 대비를 제거하고 전체가 부드러운 안개로 고르게 채워지도록 보완
+          float rayStrength = mix(0.35, 0.95, rawRay);
+
+          // 4. [풍성하게 쏟아지는 빛줄기 및 다크모드 페이드 연동]
+          // 다크모드 활성화 값(uActivated)을 곱해 부드럽게 점등되게 제어하며,
+          // 전등 아래로 확실하게 쏟아지는 무드 연출을 위해 불투명도를 평소 0.28, 호버 시 0.45로 상향 조정합니다.
+          float targetOpacity = uHovered > 0.5 ? 0.45 : 0.28;
+          float baseOpacity = targetOpacity * uActivated;
+          
+          // 기저 안개 밀도 오프셋을 0.15로 든든히 부여하여 속이 빈 느낌을 제거하고 풍부하게 전체를 채웁니다.
+          float finalAlpha = (0.15 + rayStrength * 0.85) * heightFade * edgeFade * baseOpacity;
+
+          // 노란색 억제 및 고급 백진주 웜화이트 믹싱
+          vec3 softPearlWhite = vec3(1.0, 0.96, 0.91);
+          vec3 mixedColor = mix(uColor, softPearlWhite, 0.62); // 웜화이트 62%
+          
+          // 전체 광원의 채도 및 조도를 아날로그 촛불처럼 편안한 감도로 소폭 감압
+          vec3 finalColor = mixedColor * (0.85 + rayStrength * 0.25);
+
+          gl_FragColor = vec4(finalColor, finalAlpha);
+        }
+      `,
+      uniforms: {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color('#F3EDE4') }, // 은은하고 차분한 아이보리 웜화이트로 베이스 톤 변경
+        uHovered: { value: 0 },
+        uActivated: { value: 0 } // 다크모드 점등 제어 유니폼
+      },
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
+  }, []);
+
+  // 호버 및 다크모드 활성화 시 글로우·라이트·스케일 및 3D 셰이더 유니폼 부드럽게 전환
+  useFrame((state, delta) => {
     const speed = delta * 6;
+    const elapsed = state.clock.getElapsedTime();
+    const activeTarget = isActivated ? 1.0 : 0.0;
 
-    // 내부 글로우 opacity
+    // 💡 셰이더에 실시간 경과 시간 및 호버링, 다크모드 점등 유니폼 동적 바인딩
+    if (rayShaderMaterial) {
+      rayShaderMaterial.uniforms.uTime.value = elapsed;
+      rayShaderMaterial.uniforms.uHovered.value = THREE.MathUtils.lerp(
+        rayShaderMaterial.uniforms.uHovered.value,
+        hovered ? 1.0 : 0.0,
+        speed
+      );
+      rayShaderMaterial.uniforms.uActivated.value = THREE.MathUtils.lerp(
+        rayShaderMaterial.uniforms.uActivated.value,
+        activeTarget,
+        delta * 3.5 // 다크모드 전환 시 2~3초에 걸쳐 스르륵 빛이 차오르도록 함
+      );
+    }
+
+    // 내부 글로우 opacity (다크모드가 켜졌을 때만 은은하게 밝혀짐)
     if (innerRef.current) {
+      const targetInnerOpacity = isActivated ? (hovered ? 0.88 : 0.45) : 0.0;
       innerRef.current.material.opacity = THREE.MathUtils.lerp(
         innerRef.current.material.opacity,
-        hovered ? 0.88 : 0.5,
+        targetInnerOpacity,
         speed
       );
     }
 
-    // 원뿔 빛 opacity (alphaMap이 페이드를 담당, 여기서는 전체 밝기 조절)
-    if (coneRef.current) {
-      coneRef.current.material.opacity = THREE.MathUtils.lerp(
-        coneRef.current.material.opacity,
-        hovered ? 0.28 : 0.14,
-        speed
-      );
-    }
-
-    // 포인트 라이트 강도
+    // 포인트 라이트 강도 (다크모드가 켜졌을 때만 영롱하게 켜짐)
     if (lightRef.current) {
+      const targetLightIntensity = isActivated ? (hovered ? 16 : 6) : 0;
       lightRef.current.intensity = THREE.MathUtils.lerp(
         lightRef.current.intensity,
-        hovered ? 16 : 6,
+        targetLightIntensity,
         speed
       );
     }
@@ -171,17 +274,8 @@ function LampShade({ dragged, hovered, onPointerOver, onPointerOut, onPointerDow
         <meshStandardMaterial color="#C07020" roughness={0.3} metalness={0.5} />
       </mesh>
 
-      {/* 빛 투사 원뿔 */}
-      <mesh ref={coneRef} geometry={coneGeom} position={[0, -1.2, 0]}>
-        <meshBasicMaterial
-          color="#FFD090"
-          transparent
-          opacity={0.14}
-          alphaMap={coneTex}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-        />
-      </mesh>
+      {/* 빛 투사 원뿔 - 갓 내부 안쪽 깊은 곳에서부터 스며 나오도록 Y위치 상향 조정 */}
+      <mesh ref={coneRef} geometry={coneGeom} position={[0, -1.5, 0]} material={rayShaderMaterial} />
 
       {/* 광원 */}
       <pointLight ref={lightRef} color="#FFD090" intensity={6} distance={8} decay={2} position={[0, -0.3, 0]} />
@@ -190,7 +284,7 @@ function LampShade({ dragged, hovered, onPointerOver, onPointerOut, onPointerDow
 }
 
 /* ── 물리 밴드 + 조명 ── */
-function Band({ maxSpeed = 50, minSpeed = 10 }) {
+function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   const band = useRef();
   const fixed = useRef();
   const j1 = useRef();
@@ -336,6 +430,7 @@ function Band({ maxSpeed = 50, minSpeed = 10 }) {
         >
           <CuboidCollider args={[1.1, 0.7, 0.01]} />
           <LampShade
+            isActivated={isActivated}
             dragged={dragged}
             hovered={hovered}
             onPointerOver={() => hover(true)}
@@ -375,6 +470,7 @@ function Band({ maxSpeed = 50, minSpeed = 10 }) {
 
 /* ── 메인 컴포넌트 ── */
 export default function KineticLamp({
+  isActivated = false,
   position = [0, 0, 20],
   gravity = [0, -30, 0],
   fov = 18,
@@ -401,7 +497,7 @@ export default function KineticLamp({
         <directionalLight position={[2, 4, 3]} intensity={1.5} color="#fff8e8" />
 
         <Physics gravity={gravity} timeStep={1 / 60}>
-          <Band />
+          <Band isActivated={isActivated} />
         </Physics>
 
         <Environment preset="city" />

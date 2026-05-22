@@ -9,7 +9,10 @@ export default function RippleReflection() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.1 }
+      { 
+        threshold: 0,
+        rootMargin: '0px 0px 80px 0px' 
+      }
     );
 
     const handleScroll = () => {
@@ -60,7 +63,7 @@ export default function RippleReflection() {
       {/* 텍스트 콘텐츠 */}
       <div className="ripple__content">
         <div className={`ripple__label fade-in-up ${inView ? 'visible' : ''}`}
-          style={{ transitionDelay: '0.2s' }}>
+          style={{ transitionDelay: '0.05s' }}>
           <span className="ripple__label-num">04</span>
           <span className="ripple__label-divider" />
           <span>PRODUCT VALUE 02</span>
@@ -68,7 +71,7 @@ export default function RippleReflection() {
 
         <h2
           className={`ripple__headline title-serif dark-serif fade-in-up ${inView ? 'visible' : ''}`}
-          style={{ transitionDelay: '0.5s' }}
+          style={{ transitionDelay: '0.2s' }}
         >
           단조롭던 천장에<br />
           <em className="ripple__headline-em">일렁이는 바다를 띄워,</em><br />
@@ -77,7 +80,7 @@ export default function RippleReflection() {
 
         <p
           className={`ripple__sub fade-in-up ${inView ? 'visible' : ''}`}
-          style={{ transitionDelay: '0.8s' }}
+          style={{ transitionDelay: '0.35s' }}
         >
           앰버 필라멘트에서 발생한 빛이 조명 갓의 기하학적 패턴을 통과하여<br />
           천장과 벽에 살아 움직이는 빛의 윤슬을 투사합니다.
@@ -86,7 +89,7 @@ export default function RippleReflection() {
         {/* 스펙 배지 */}
         <div
           className={`ripple__specs fade-in-up ${inView ? 'visible' : ''}`}
-          style={{ transitionDelay: '1.1s' }}
+          style={{ transitionDelay: '0.5s' }}
         >
           {[
             { value: '2700K', label: '색온도' },

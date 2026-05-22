@@ -4,6 +4,7 @@
   display: flex;
   align-items: flex-end;
   padding: var(--section-padding-y) var(--section-padding-x);
+  padding-top: calc(var(--section-padding-y) + 140px); /* 배경색이 끊기지 않도록 마진 대신 패딩 처리로 간격 확보 */
   overflow: hidden;
 }
 
@@ -19,7 +20,7 @@
   inset: 0;
   opacity: 0;
   mix-blend-mode: screen;
-  transition: opacity 1.5s var(--ease-smooth);
+  transition: opacity 0.9s var(--ease-smooth); /* 윤슬이 더 빠르게 차오르도록 트랜지션 속도 단축 */
 }
 
 .ripple--active .ripple__layer { opacity: 1; }
@@ -33,7 +34,7 @@
     transparent 70%
   );
   animation: ripple-breathe-1 4s ease-in-out infinite;
-  transition-delay: 0.2s;
+  transition-delay: 0s; /* 지연시간을 0초로 수정하여 진입 즉시 켜짐 */
 }
 
 /* 레이어 2: 좌하 반사 */
@@ -44,7 +45,7 @@
     transparent 60%
   );
   animation: ripple-breathe-2 5.5s ease-in-out infinite 0.8s;
-  transition-delay: 0.5s;
+  transition-delay: 0.15s; /* 지연 최소화 */
 }
 
 /* 레이어 3: 우상 반사 */
@@ -55,7 +56,7 @@
     transparent 60%
   );
   animation: ripple-breathe-1 6s ease-in-out infinite 1.2s;
-  transition-delay: 0.8s;
+  transition-delay: 0.3s; /* 지연 최소화 */
 }
 
 /* 레이어 4: 수평 파동 스트라이프 */
@@ -68,7 +69,7 @@
     rgba(226, 149, 67, 0.04) 30px
   );
   animation: ripple-wave 8s linear infinite;
-  transition-delay: 1s;
+  transition-delay: 0.4s; /* 지연 최소화 */
 }
 
 /* 레이어 5: 다이아 패턴 */
@@ -79,7 +80,7 @@
   );
   background-size: 40px 40px;
   animation: ripple-wave 12s linear infinite reverse;
-  transition-delay: 1.2s;
+  transition-delay: 0.5s; /* 지연 최소화 */
 }
 
 @keyframes ripple-breathe-1 {
@@ -214,7 +215,11 @@
 
 /* ── 반응형 ── */
 @media (max-width: 768px) {
-  .ripple { padding-bottom: 6rem; }
+  .ripple { 
+    padding-bottom: 6rem; 
+    margin-top: 0;
+    padding-top: calc(var(--section-padding-y) + 60px); /* 모바일 환경에서도 마진 대신 패딩 적용 */
+  }
   .ripple__specs { gap: 2rem; }
   .ripple__sub br { display: none; }
 }

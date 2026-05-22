@@ -276,7 +276,9 @@ export default function TimelineShade() {
         {/* 우측: 물리 기반 3D 조명 오브제 */}
 
         <div className="timeline__lamp-wrap">
+
           <KineticLamp
+            isActivated={isActivated}
             position={[0, 0, 20]}
             gravity={[0, -30, 0]}
             fov={18}

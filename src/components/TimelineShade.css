@@ -1,9 +1,9 @@
 .timeline {
   position: relative;
-  min-height: 160vh; /* 고정스크롤 대폭 단축하여 긴 하단 고정 제거 (320vh -> 160vh) */
+  min-height: 120vh; /* 고정스크롤 탈출 시 스크롤 거리를 최적화하여 피로도 감소 (160vh -> 120vh) */
   background-color: var(--color-bg-ivory);
   transition: background-color 0.4s ease;
-  padding-bottom: 12rem; /* margin 대신 padding을 주어 다크모드가 여백 공간까지 차오르도록 함 */
+  padding-bottom: 8rem; /* 고정 해제 후 하단 여백의 길이를 줄여 빠르게 다음 섹션으로 연결 */
 }
 
 /* 진입 시 - 1.6초 딜레이 후 0.8초 동안 부드럽게 다크 배경화 */
@@ -251,7 +251,13 @@
   .timeline__lamp-wrap { display: none; }
   .timeline__progress { display: none; }
   .timeline {
-    min-height: 120vh; /* 모바일 고정스크롤 단축 (200vh -> 120vh) */
-    padding-bottom: 6rem; /* 모바일 margin 대신 padding을 주어 다크모드가 채워지도록 함 */
+    min-height: 100vh; /* 모바일 고정스크롤 탈출 피로도 대폭 개선 (120vh -> 100vh) */
+    padding-bottom: 4rem; /* 여백 단축 */
   }
+}
+
+
+.kinetic-lamp-wrapper {
+  z-index: 2; /* 3D 조명 캔버스의 레이어 우선순위 보장 */
+  position: relative;
 }
