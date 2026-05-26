@@ -1,0 +1,13 @@
+.scroll-reveal {
+  margin: 0; /* 커스텀 래퍼 사용을 위해 기본 마진 제거 */
+}
+
+.scroll-reveal-text {
+  /* 폰트 속성들은 커스텀 클래스(textClassName)를 통해 주입받기 위해 제거 */
+  display: block;
+}
+
+.word {
+  display: inline-block;
+  white-space: pre; /* 띄어쓰기(공백)를 보존하기 위해 필요 */
+}

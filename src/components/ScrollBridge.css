@@ -1,0 +1,476 @@
+.scroll-bridge {
+  position: relative;
+  min-height: 100vh; /* ??ㅻ즴 ?됯퀬猷???類ｋ궖 */
+  margin-top: 80vh; /* ??곸읈 ?諭€??TimelineShade)???袁⑹읈???遺얇늺 獄쏅쉼?앮에?甕곗€щ선?????源놁삢??롫즲嚥??蹂? 揶쏄쑨爰??봔€??*/
+  background-color: var(--color-bg-abyss);
+  z-index: 20; /* TimelineShade ?袁⑥삋 ??됱뵠???醫???뤿연 ?봔€??뺤쑎????롫뼊 ?源놁삢 筌왖€??*/
+}
+
+/* 💡 80vh 간격 영역이 아이보리색으로 비치는 것을 원천 차단하기 위한 가상 요소 */
+.scroll-bridge::before {
+  content: "";
+  position: absolute;
+  top: -80vh;
+  left: 0;
+  width: 100%;
+  height: 80vh;
+  background-color: var(--color-bg-abyss);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.scroll-bridge__sticky-wrapper {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ???? ?裕?[揶쏆뮆而???뚣끉??? 獄쏄퀗瑗???ｋ궢 ?袁⑹뒠 ?⑤벀而? ???? */
+.scroll-bridge__custom-effects {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  /* ?袁⑸툡??野껋럡??醫롮뱽 ?봔??뺤쓦野?筌왖???폒??筌띾뜆?????ｋ궢 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+
+/* ?됰뜄? 野꺜筌앹빘??揶쎛??諭?疫꼲嚥≪뮇??(?癒?퐤 ????뽮쉐????1.5????덈툧 ??뽮퐣??揶쏆뮉?? */
+.scroll-bridge__guide-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(226, 149, 67, 0.12) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  opacity: 0;
+  transition: opacity 1.5s var(--ease-smooth), transform 1.5s var(--ease-smooth);
+}
+
+.scroll-bridge.active .scroll-bridge__guide-glow {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+  /* ???? 餓λ쵐釉?揶쎛??諭?????꾨７域밸챶??????? */
+  .scroll-bridge__intro-wrap {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: var(--container-max);
+    width: 100%;
+    padding: 0 var(--section-padding-x);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    pointer-events: none; /* 배경과 상호작용하기 위해 텍스트 영역의 이벤트 가로채기 방지 */
+  }
+
+  .scroll-bridge__float-container {
+    display: block;
+    width: 100%;
+  }
+
+.scroll-bridge__intro-title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: var(--color-accent-amber);
+  margin-bottom: 2rem;
+  text-shadow: 0 0 4px rgba(226, 149, 67, 0.2);
+}
+
+.scroll-bridge__intro-desc {
+  font-size: calc(var(--text-lg) * 1.1);
+  color: var(--color-text-sage);
+  line-height: 1.6;
+}
+
+.scroll-bridge__em {
+  font-style: normal;
+  color: var(--color-accent-amber);
+  text-shadow: 0 0 1px var(--color-accent-amber);
+}
+
+/* ???? 獄쏆꼷??????? */
+@media (max-width: 768px) {
+  .scroll-bridge__intro-desc {
+    font-size: var(--text-base);
+  }
+  .scroll-bridge__intro-desc br {
+    display: none;
+  }
+}
+
+/* ???? 3??ｍ???쎄쾿嚥??紐껊탵?냈??꾧숲 ???? */
+.scroll-bridge__indicators {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.8s var(--ease-smooth);
+}
+
+.scroll-bridge.active .scroll-bridge__indicators {
+  opacity: 1;
+}
+
+.indicator-dot {
+  width: 4px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.15);
+  transition: height 1s var(--ease-smooth), background-color 1s var(--ease-smooth), box-shadow 1s var(--ease-smooth);
+}
+
+.indicator-dot.active {
+  height: 48px;
+  background-color: var(--color-accent-amber);
+  box-shadow: 0 0 10px var(--color-accent-amber-glow);
+}
+
+/* ???? ?뚣끉??? 獄쏄퀗瑗???ｋ궢 ?怨뺛걟 (data-step 獄쏅뗄??? ???? */
+/* ??쎈??癰궰野껋럥留????춳??.scroll-bridge__custom-effects ??獄쏄퀗瑗??깆뵠 ??????띿쓺 ?袁れ넎??롫뮉 ?怨뺛걟 */
+.scroll-bridge__custom-effects {
+  transition: background-color 1.5s var(--ease-smooth);
+}
+
+.scroll-bridge[data-step="1"] .scroll-bridge__custom-effects {
+  background-color: transparent;
+}
+
+.scroll-bridge[data-step="2"] .scroll-bridge__custom-effects {
+  background-color: rgba(226, 149, 67, 0.05); /* ??쎈?2: ?怨뺤쒔 ????곸? ?곕떽? */
+}
+
+.scroll-bridge[data-step="3"] .scroll-bridge__custom-effects {
+  background-color: rgba(192, 132, 252, 0.05); /* ??쎈?3: 癰귣??껈뜮???곸? ?곕떽? */
+}
+
+/* ???? ?怨쀯폒 ??ｋ궢(Galaxy) ??됱뵠??????????? */
+.scroll-bridge__galaxy-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s var(--ease-smooth); 
+  pointer-events: none; /* ??뽮쉐?遺얜┷筌왖€ ??녿릭?????뮉 筌띾뜆???筌△뫀??*/
+}
+
+.scroll-bridge__galaxy-layer.active {
+  opacity: 1;
+  transition: opacity 1.5s var(--ease-smooth); /* ??쥓?ㅵ칰??遺얇늺???怨쀯폒 ??ｋ궢揶쎛€ ?????롫즲嚥???륁젟 */
+  pointer-events: auto; /* 1??ｍ€???뽮쉐????筌?뗀苡??筌띾뜆????紐낃숲??덈€???됱뒠 */
+}
+
+/* ???? ??삵닏(Orb) ??됱뵠??????????? */
+.scroll-bridge__orb-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s var(--ease-smooth); 
+  pointer-events: none;
+}
+
+.scroll-bridge__orb-layer.active {
+  opacity: 1;
+  transition: opacity 1.5s var(--ease-smooth);
+  pointer-events: auto;
+}
+
+/* ── 리퀴드 크롬(LiquidChrome) 레이어 스타일 ── */
+.scroll-bridge__liquid-chrome-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1.5s var(--ease-smooth); 
+  pointer-events: none;
+}
+
+.scroll-bridge__liquid-chrome-layer.active {
+  opacity: 1;
+  transition: opacity 1.5s var(--ease-smooth);
+  pointer-events: auto;
+}
+
+.ripple {
+  position: relative;
+  min-height: 100vh;
+  margin-top: 80vh;
+  display: flex;
+  align-items: flex-end;
+  padding: var(--section-padding-y) var(--section-padding-x);
+  padding-top: calc(var(--section-padding-y) + 140px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ?? ?ㅼ뒳 ?덉씠???? */
+.ripple__layers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ripple__layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 2s var(--ease-smooth); /* ?좊땲硫붿씠???쒖옉????遺?쒕읇寃?留뚮뱾湲??꾪빐 ?몃옖吏???쒓컙 ?곗옣 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.scroll-bridge.active .ripple__layer {
+  opacity: 1;
+}
+
+/* ?덉씠??1: 以묒븰 ?곕쾭 愿묒썝 */
+.ripple__layer--1 {
+  background: radial-gradient(
+    ellipse 60% 40% at 50% 30%,
+    rgba(226, 149, 67, 0.5) 0%,
+    rgba(226, 149, 67, 0.2) 40%,
+    transparent 70%
+  );
+  animation: ripple-breathe-1 3s ease-in-out infinite;
+  transition-delay: 0s; /* 吏?곗떆媛꾩쓣 0珥덈줈 ?섏젙?섏뿬 吏꾩엯 利됱떆 耳쒖쭚 */
+}
+
+/* ?덉씠??2: 醫뚰븯 諛섏궗 */
+.ripple__layer--2 {
+  background: radial-gradient(
+    ellipse 50% 60% at 20% 80%,
+    rgba(200, 120, 40, 0.35) 0%,
+    transparent 60%
+  );
+  animation: ripple-breathe-2 3.8s ease-in-out infinite 0.5s;
+  transition-delay: 0.15s; /* 吏??理쒖냼??*/
+}
+
+/* ... ?곗긽 諛섏궗 */
+.ripple__layer--3 {
+  background: radial-gradient(
+    ellipse 45% 55% at 80% 20%,
+    rgba(240, 170, 80, 0.3) 0%,
+    transparent 60%
+  );
+  animation: ripple-breathe-1 4.5s ease-in-out infinite 0.8s;
+  transition-delay: 0.3s; /* 吏??理쒖냼??*/
+}
+
+/* ?덉씠??4: ?섑룊 ?뚮룞 ?ㅽ듃?쇱씠??(transform 湲곕컲 GPU 媛???곸슜) */
+.ripple__layer--4 {
+  top: -100px;
+  bottom: -100px;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 28px,
+    rgba(226, 149, 67, 0.04) 28px,
+    rgba(226, 149, 67, 0.04) 30px
+  );
+  animation: ripple-translate-wave 5s linear infinite;
+  transition-delay: 0.4s; /* 吏??理쒖냼??*/
+}
+
+/* ?덉씠??5: ?ㅼ씠???⑦꽩 (transform 湲곕컲 GPU 媛???곸슜) */
+.ripple__layer--5 {
+  top: -100px;
+  bottom: -100px;
+  left: -100px;
+  right: -100px;
+  background: repeating-conic-gradient(
+    rgba(226, 149, 67, 0.03) 0deg 90deg,
+    transparent 90deg 180deg
+  );
+  background-size: 40px 40px;
+  animation: ripple-translate-wave 8s linear infinite reverse;
+  transition-delay: 0.5s; /* 吏??理쒖냼??*/
+}
+
+@keyframes ripple-breathe-1 {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.85; }
+  50% { transform: scale(1.08) translateY(-12px); opacity: 1; }
+}
+
+@keyframes ripple-breathe-2 {
+  0%, 100% { transform: scale(1) translateX(0); opacity: 0.7; }
+  50% { transform: scale(1.05) translateX(10px); opacity: 1; }
+}
+
+@keyframes ripple-translate-wave {
+  from { transform: translateY(0); }
+  to { transform: translateY(60px); }
+}
+
+/* ?? ?뚮룞 留??? */
+.ripple__rings {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.ripple__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ring-size);
+  height: var(--ring-size);
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(226, 149, 67, 0.2);
+  border-radius: 50%;
+  opacity: 0;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.scroll-bridge.active .ripple__ring {
+  animation: ring-expand 2.5s ease-out infinite;
+  animation-delay: var(--ring-delay);
+}
+
+@keyframes ring-expand {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
+}
+
+/* ?? 肄섑뀗痢??? */
+.ripple__content {
+  position: relative;
+  z-index: 2;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ripple__label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: var(--color-accent-amber);
+  margin-bottom: 2.5rem;
+}
+
+.ripple__label-num { font-size: 0.65rem; font-weight: 700; }
+.ripple__label-divider { width: 24px; height: 1px; background: var(--color-accent-amber); opacity: 0.5; }
+
+.ripple__headline {
+  font-size: var(--text-2xl);
+  color: var(--color-text-sage);
+  text-shadow: 0 0 1px var(--color-text-sage);
+  margin-bottom: 1.8rem;
+  line-height: 1.3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  align-items: center;
+}
+
+.ripple__line {
+  display: block;
+}
+
+.ripple__headline-em {
+  font-style: normal;
+  color: var(--color-accent-amber);
+}
+
+.ripple__sub {
+  font-size: var(--text-base);
+  color: var(--color-text-sage);
+  opacity: 0.6;
+  line-height: 1.9;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  text-align: center;
+}
+
+/* ?? ?ㅽ럺 諛곗? ?? */
+.ripple__specs {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ripple__spec-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.ripple__spec-value {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-accent-amber);
+  font-family: var(--font-body);
+  line-height: 1;
+}
+
+.ripple__spec-label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.15em;
+  color: var(--color-text-sage);
+  opacity: 0.5;
+}
+
+/* ?? 怨듯넻 ?섏씠?????좊땲硫붿씠???? */
+.fade-smudge {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(20px);
+  transition:
+    opacity 0.8s var(--ease-smooth),
+    filter 0.8s var(--ease-smooth),
+    transform 0.8s var(--ease-smooth);
+}
+
+.fade-smudge.visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+/* ?? ?띿뒪???섏씠?쒖씤 ?몃옖吏???대옒??蹂듦뎄 ?? */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1.8s var(--ease-smooth), transform 1.8s var(--ease-smooth);
+}
+
+.fade-in-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}

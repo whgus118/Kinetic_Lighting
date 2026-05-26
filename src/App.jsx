@@ -6,7 +6,7 @@ import Navigation     from './components/Navigation';
 import Hero           from './components/Hero';
 import Problem        from './components/Problem';
 import TimelineShade  from './components/TimelineShade';
-import RippleReflection from './components/RippleReflection';
+import ScrollBridge   from './components/ScrollBridge';
 import TrustSpecs     from './components/TrustSpecs';
 import CloseCTA       from './components/CloseCTA';
 import CursorGlow     from './components/CursorGlow';
@@ -51,9 +51,10 @@ export default function App() {
   // 다크존 스크롤 감지
   useEffect(() => {
     const handleScroll = () => {
-      const eclipseEl = document.getElementById('section-eclipse');
-      if (eclipseEl) {
-        const rect = eclipseEl.getBoundingClientRect();
+      const shadeEl = document.getElementById('section-timeline-shade');
+      if (shadeEl) {
+        const rect = shadeEl.getBoundingClientRect();
+        // 타임라인 섹션이 화면의 40% 이상 올라왔을 때 다크존으로 간주
         setIsDarkZone(rect.top < window.innerHeight * 0.4);
       }
     };
@@ -80,12 +81,32 @@ export default function App() {
     const dot = document.getElementById('cursor-dot');
     if (!dot) return;
 
+    let rafId;
     const handleMouseMove = (e) => {
-      dot.style.transform = `translate(${e.clientX - 4}px, ${e.clientY - 4}px)`;
+      const target = e.target;
+      const clientX = e.clientX;
+      const clientY = e.clientY;
+
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        dot.style.transform = `translate3d(${clientX}px, ${clientY}px, 0) translate(-50%, -50%)`;
+        
+        // 동적으로 클래스가 추가되는 요소들을 위해 mousemove에서 호버 상태 감지
+        const isInteractive = target && target.closest ? target.closest('a, button, [role="button"], input, select, textarea, [tabindex]:not([tabindex="-1"]), .problem__noise-item, .trust__spec-item, .trust__material-chip') : false;
+        if (isInteractive) {
+          dot.classList.add('cursor-dot--hover');
+        } else {
+          dot.classList.remove('cursor-dot--hover');
+        }
+      });
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   return (
@@ -97,7 +118,7 @@ export default function App() {
         <Hero />
         <Problem />
         <TimelineShade />
-        <RippleReflection />
+        <ScrollBridge />
         <TrustSpecs />
         <CloseCTA />
       </main>

@@ -46,14 +46,14 @@ export default function TimelineShade() {
 
       // 1. 이미 애니메이션이 다 끝난 상태인 경우
       if (finished) {
-        if (rect.top > 0) {
+        if (rect.top > viewportH) {
           isActivatedRef.current = false;
           isAnimationFinishedRef.current = false;
           setIsActivated(false);
           setIsAnimationFinished(false);
           pinnedScrollY.current = null;
           if (window.lenis) window.lenis.start(); // 위로 올려 탈출 시 스크롤 재개 보장
-        } else {
+        } else if (rect.bottom > 0) {
           isActivatedRef.current = true;
           setIsActivated(true);
         }
@@ -174,8 +174,16 @@ export default function TimelineShade() {
   // 스크롤 활성화 여부에 따른 고정 비율 (0 또는 1)
 
   const scrollRatio = isActivated ? 1 : 0;
+  
+  // 글로벌 테마 연동을 위해 0~1 값을 CSS 변수로 주입 (Scroll text 색상 동기화용)
+  useEffect(() => {
+    document.documentElement.style.setProperty('--global-timeline-ratio', scrollRatio);
+    return () => {
+      document.documentElement.style.removeProperty('--global-timeline-ratio');
+    };
+  }, [scrollRatio]);
 
-
+  // 비율에 따른 파생 스타일 (텍스트, 배경 등에 적용)
   const clipRadius = 8 + scrollRatio * 92; // 8% ~ 100%
 
   const bgOpacity = scrollRatio; // 0 ~ 1
@@ -189,7 +197,7 @@ export default function TimelineShade() {
   return (
     <section
       ref={sectionRef}
-      id="section-eclipse"
+      id="section-timeline-shade"
       className={`timeline section-light ${isActivated ? "active" : ""}`}
       aria-label="이클립스 명도 반전 섹션"
       style={{ "--scroll-ratio": scrollRatio }}
@@ -237,10 +245,7 @@ export default function TimelineShade() {
             </em>
           </h2>
 
-          <div
-            className="timeline__features"
-            style={{ opacity: Math.max(0.4, textOpacity) }}
-          >
+          <div className="timeline__features">
             {[
               {
                 icon: "◎",
@@ -286,14 +291,7 @@ export default function TimelineShade() {
         </div>
       </div>
 
-      {/* 진행률 인디케이터 */}
 
-      <div className="timeline__progress" aria-hidden="true">
-        <div
-          className="timeline__progress-bar"
-          style={{ scaleY: scrollRatio }}
-        />
-      </div>
     </section>
   );
 }
