@@ -16,27 +16,104 @@ import "./KineticLamp.css";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 
-/* ── 랜야드 텍스처: 캔버스로 생성 ── */
-function createLanyardTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 64;
-  canvas.height = 256;
-  const ctx = canvas.getContext("2d");
+/* ── 3D 빛 투사 원뿔용 셰이더 코드 ── */
+const RAY_VERTEX_SHADER = `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표 전달
+  void main() {
+    vUv = uv;
+    vPosition = position;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    vViewPosition = -mvPosition.xyz;
+    vNormal = normalMatrix * normal;
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
 
-  // 세로 줄무늬 패턴 (앰버 계열)
-  const grad = ctx.createLinearGradient(0, 0, 64, 0);
-  grad.addColorStop(0, "#B8762A");
-  grad.addColorStop(0.3, "#D1DCD6");
-  grad.addColorStop(0.5, "#E8C882");
-  grad.addColorStop(0.7, "#D1DCD6");
-  grad.addColorStop(1, "#B8762A");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 64, 256);
+const RAY_FRAGMENT_SHADER = `
+  precision highp float;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+  varying vec3 vViewPosition;
+  varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표
 
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  return tex;
-}
+  uniform float uTime;
+  uniform vec3 uColor;
+  uniform float uHovered;
+  uniform float uActivated; // 다크모드 활성화 점등 유니폼
+
+  // 의사 난수 2D 노이즈 유틸리티
+  float rand(vec2 co) {
+    return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
+  }
+
+  float noise(vec2 st) {
+    vec2 i = floor(st);
+    vec2 f = fract(st);
+    float a = rand(i);
+    float b = rand(i + vec2(1.0, 0.0));
+    float c = rand(i + vec2(0.0, 1.0));
+    float d = rand(i + vec2(1.0, 1.0));
+    vec2 u = f*f*(3.0-2.0*f);
+    return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+  }
+
+  void main() {
+    // 1. [꼭짓점 및 바닥 양방향 부드러운 감쇠]
+    // 원뿔대 상단(Y=1.0)과 바닥(Y=0.0) 양끝을 솜사탕처럼 스무스하게 뭉개어 이음새 경계를 완벽히 지웁니다.
+    // 꼭짓점 부근(Y=1.0) 감쇠 범위를 0.65까지 깊게 조절하여 갓 안쪽으로 들어갈수록 은은히 사라지게 합니다.
+    float heightFade = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
+
+    // 2. [전체 볼륨 두께 복원 - 프레넬 감쇠 지수 대폭 완화]
+    // 빛 실린더 외곽 옆면 테두리가 너무 얇게 쪼그라드는 현상을 완벽히 해결하기 위해
+    // 프레넬 감쇠 지수를 1.5로 낮추어, 풍성한 안개 기둥의 전체 3D 덩어리감을 완전히 확보합니다.
+    vec3 normal = normalize(vNormal);
+    vec3 viewDir = normalize(vViewPosition);
+    float edgeFade = pow(abs(dot(normal, viewDir)), 1.5); 
+
+    // 3. [이음새 세로선 해결 - 3D 로컬 공간 회전 왜곡 왜용]
+    // UV 경계면 끊김 현상(세로줄)을 해결하기 위해 3D 로컬 좌표에 직접 회전 왜곡을 주어 파동을 연산합니다.
+    // Y축 높이에 따라 리드미컬하게 비틀어지는 나선형 왜곡 계산
+    float distortionFactor = 0.3 * sin(uTime * 1.2 + vPosition.y * 3.0) * (1.0 - vUv.y);
+    float cosD = cos(distortionFactor);
+    float sinD = sin(distortionFactor);
+    
+    vec2 rotPos = vec2(
+      vPosition.x * cosD - vPosition.z * sinD,
+      vPosition.x * sinD + vPosition.z * cosD
+    );
+
+    float speed = uTime * 0.45;
+    float wave1 = sin(rotPos.x * 2.8 + speed) * 0.5 + 0.5;
+    float wave2 = cos(rotPos.y * 3.2 - speed * 0.6) * 0.5 + 0.5;
+    float wave3 = noise(vec2(rotPos.x * 2.0 - speed * 0.2, vPosition.y * 1.5)) * 0.6;
+    
+    float rawRay = wave1 * 0.36 + wave2 * 0.36 + wave3 * 0.28;
+    
+    // [노이즈 평탄화] smoothstep의 쨍한 얼룩 대비를 제거하고 전체가 부드러운 안개로 고르게 채워지도록 보완
+    float rayStrength = mix(0.35, 0.95, rawRay);
+
+    // 4. [풍성하게 쏟아지는 빛줄기 및 다크모드 페이드 연동]
+    // 다크모드 활성화 값(uActivated)을 곱해 부드럽게 점등되게 제어하며,
+    // 전등 아래로 확실하게 쏟아지는 무드 연출을 위해 불투명도를 평소 0.28, 호버 시 0.45로 상향 조정합니다.
+    float targetOpacity = uHovered > 0.5 ? 0.45 : 0.28;
+    float baseOpacity = targetOpacity * uActivated;
+    
+    // 기저 안개 밀도 오프셋을 0.15로 든든히 부여하여 속이 빈 느낌을 제거하고 풍부하게 전체를 채웁니다.
+    float finalAlpha = (0.15 + rayStrength * 0.85) * heightFade * edgeFade * baseOpacity;
+
+    // 노란색 억제 및 고급 백진주 웜화이트 믹싱
+    vec3 softPearlWhite = vec3(1.0, 0.96, 0.91);
+    vec3 mixedColor = mix(uColor, softPearlWhite, 0.62); // 웜화이트 62%
+    
+    // 전체 광원의 채도 및 조도를 아날로그 촛불처럼 편안한 감도로 소폭 감압
+    vec3 finalColor = mixedColor * (0.85 + rayStrength * 0.25);
+
+    gl_FragColor = vec4(finalColor, finalAlpha);
+  }
+`;
 
 /* ── 조명 갓 3D 메시 ── */
 function LampShade({
@@ -82,102 +159,8 @@ function LampShade({
   // 💡 [대체] 기존의 정적 텍스처를 걷어내고, 3D 원뿔에 입체적으로 동작하는 커스텀 셰이더 재질 정의
   const rayShaderMaterial = useMemo(() => {
     return new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vNormal;
-        varying vec3 vViewPosition;
-        varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표 전달
-        void main() {
-          vUv = uv;
-          vPosition = position;
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          vViewPosition = -mvPosition.xyz;
-          vNormal = normalMatrix * normal;
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        precision highp float;
-        varying vec2 vUv;
-        varying vec3 vNormal;
-        varying vec3 vViewPosition;
-        varying vec3 vPosition; // UV 끊김 해결용 3D 로컬 좌표
-
-        uniform float uTime;
-        uniform vec3 uColor;
-        uniform float uHovered;
-        uniform float uActivated; // 다크모드 활성화 점등 유니폼
-
-        // 의사 난수 2D 노이즈 유틸리티
-        float rand(vec2 co) {
-          return fract(sin(dot(co.xy, vec2(12.9898,78.233))) * 43758.5453);
-        }
-
-        float noise(vec2 st) {
-          vec2 i = floor(st);
-          vec2 f = fract(st);
-          float a = rand(i);
-          float b = rand(i + vec2(1.0, 0.0));
-          float c = rand(i + vec2(0.0, 1.0));
-          float d = rand(i + vec2(1.0, 1.0));
-          vec2 u = f*f*(3.0-2.0*f);
-          return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-        }
-
-        void main() {
-          // 1. [꼭짓점 및 바닥 양방향 부드러운 감쇠]
-          // 원뿔대 상단(Y=1.0)과 바닥(Y=0.0) 양끝을 솜사탕처럼 스무스하게 뭉개어 이음새 경계를 완벽히 지웁니다.
-          // 꼭짓점 부근(Y=1.0) 감쇠 범위를 0.65까지 깊게 조절하여 갓 안쪽으로 들어갈수록 은은히 사라지게 합니다.
-          float heightFade = smoothstep(0.0, 0.35, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
-
-          // 2. [전체 볼륨 두께 복원 - 프레넬 감쇠 지수 대폭 완화]
-          // 빛 실린더 외곽 옆면 테두리가 너무 얇게 쪼그라드는 현상을 완벽히 해결하기 위해
-          // 프레넬 감쇠 지수를 1.5로 낮추어, 풍성한 안개 기둥의 전체 3D 덩어리감을 완전히 확보합니다.
-          vec3 normal = normalize(vNormal);
-          vec3 viewDir = normalize(vViewPosition);
-          float edgeFade = pow(abs(dot(normal, viewDir)), 1.5); 
-
-          // 3. [이음새 세로선 해결 - 3D 로컬 공간 회전 왜곡 왜용]
-          // UV 경계면 끊김 현상(세로줄)을 해결하기 위해 3D 로컬 좌표에 직접 회전 왜곡을 주어 파동을 연산합니다.
-          // Y축 높이에 따라 리드미컬하게 비틀어지는 나선형 왜곡 계산
-          float distortionFactor = 0.3 * sin(uTime * 1.2 + vPosition.y * 3.0) * (1.0 - vUv.y);
-          float cosD = cos(distortionFactor);
-          float sinD = sin(distortionFactor);
-          
-          vec2 rotPos = vec2(
-            vPosition.x * cosD - vPosition.z * sinD,
-            vPosition.x * sinD + vPosition.z * cosD
-          );
-
-          float speed = uTime * 0.45;
-          float wave1 = sin(rotPos.x * 2.8 + speed) * 0.5 + 0.5;
-          float wave2 = cos(rotPos.y * 3.2 - speed * 0.6) * 0.5 + 0.5;
-          float wave3 = noise(vec2(rotPos.x * 2.0 - speed * 0.2, vPosition.y * 1.5)) * 0.6;
-          
-          float rawRay = wave1 * 0.36 + wave2 * 0.36 + wave3 * 0.28;
-          
-          // [노이즈 평탄화] smoothstep의 쨍한 얼룩 대비를 제거하고 전체가 부드러운 안개로 고르게 채워지도록 보완
-          float rayStrength = mix(0.35, 0.95, rawRay);
-
-          // 4. [풍성하게 쏟아지는 빛줄기 및 다크모드 페이드 연동]
-          // 다크모드 활성화 값(uActivated)을 곱해 부드럽게 점등되게 제어하며,
-          // 전등 아래로 확실하게 쏟아지는 무드 연출을 위해 불투명도를 평소 0.28, 호버 시 0.45로 상향 조정합니다.
-          float targetOpacity = uHovered > 0.5 ? 0.45 : 0.28;
-          float baseOpacity = targetOpacity * uActivated;
-          
-          // 기저 안개 밀도 오프셋을 0.15로 든든히 부여하여 속이 빈 느낌을 제거하고 풍부하게 전체를 채웁니다.
-          float finalAlpha = (0.15 + rayStrength * 0.85) * heightFade * edgeFade * baseOpacity;
-
-          // 노란색 억제 및 고급 백진주 웜화이트 믹싱
-          vec3 softPearlWhite = vec3(1.0, 0.96, 0.91);
-          vec3 mixedColor = mix(uColor, softPearlWhite, 0.62); // 웜화이트 62%
-          
-          // 전체 광원의 채도 및 조도를 아날로그 촛불처럼 편안한 감도로 소폭 감압
-          vec3 finalColor = mixedColor * (0.85 + rayStrength * 0.25);
-
-          gl_FragColor = vec4(finalColor, finalAlpha);
-        }
-      `,
+      vertexShader: RAY_VERTEX_SHADER,
+      fragmentShader: RAY_FRAGMENT_SHADER,
       uniforms: {
         uTime: { value: 0 },
         uColor: { value: new THREE.Color("#F3EDE4") }, // 은은하고 차분한 아이보리 웜화이트로 베이스 톤 변경
@@ -311,6 +294,20 @@ function LampShade({
 }
 
 /* ── 물리 밴드 + 조명 ── */
+const SEGMENT_PROPS = {
+  type: "dynamic",
+  canSleep: true,
+  colliders: false,
+  angularDamping: 5, // 너무 뻣뻣하지 않게
+  linearDamping: 5,
+};
+
+// 매 렌더링 시 가비지 생성을 방지하기 위한 정적 벡터들
+const VEC = new THREE.Vector3();
+const DIR = new THREE.Vector3();
+const ANG = new THREE.Vector3();
+const ROT = new THREE.Vector3();
+
 function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   const band = useRef();
   const fixed = useRef();
@@ -318,21 +315,6 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   const j2 = useRef();
   const j3 = useRef();
   const lamp = useRef();
-
-  const vec = new THREE.Vector3();
-  const dir = new THREE.Vector3();
-  const ang = new THREE.Vector3();
-  const rot = new THREE.Vector3();
-
-  const segmentProps = {
-    type: "dynamic",
-    canSleep: true,
-    colliders: false,
-    angularDamping: 5, // 8 → 5: 너무 뻣뻣하지 않게
-    linearDamping: 5,
-  };
-
-  const lanyardTex = useMemo(() => createLanyardTexture(), []);
 
   const [curve] = useState(
     () =>
@@ -367,16 +349,16 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   useFrame((state, delta) => {
     if (dragged) {
       // X/Y만 이동 (Z 고정)
-      vec.set(state.pointer.x, state.pointer.y, 0.3).unproject(state.camera);
-      dir.copy(vec).sub(state.camera.position).normalize();
+      VEC.set(state.pointer.x, state.pointer.y, 0.3).unproject(state.camera);
+      DIR.copy(VEC).sub(state.camera.position).normalize();
       // Z를 0으로 고정하는 방향으로 레이캐스트
-      const t = -state.camera.position.z / dir.z;
-      vec.copy(state.camera.position).addScaledVector(dir, t);
+      const t = -state.camera.position.z / DIR.z;
+      VEC.copy(state.camera.position).addScaledVector(DIR, t);
 
       [lamp, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp());
       lamp.current?.setNextKinematicTranslation({
-        x: vec.x - dragged.x,
-        y: vec.y - dragged.y,
+        x: VEC.x - dragged.x,
+        y: VEC.y - dragged.y,
         z: 0,
       });
     }
@@ -423,14 +405,14 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
         curve.points[2].copy(j2Pos).setZ(0);
         curve.points[3].copy(j1Pos).setZ(0);
         curve.points[4].set(fixedPos.x, fixedPos.y, 0); // 천장 고정점
-        band.current.geometry.setPoints(curve.getPoints(64));
+        band.current.geometry.setPoints(curve.getPoints(20)); // 기존 64개에서 20개로 최적화 (GC 및 연산 오버헤드 격감)
       }
 
       // 각도 안정화
-      if (ang && rot && lamp.current) {
-        ang.copy(lamp.current.angvel());
-        rot.copy(lamp.current.rotation());
-        lamp.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
+      if (ANG && ROT && lamp.current) {
+        ANG.copy(lamp.current.angvel());
+        ROT.copy(lamp.current.rotation());
+        lamp.current.setAngvel({ x: ANG.x, y: ANG.y - ROT.y * 0.25, z: ANG.z });
       }
     }
   });
@@ -441,20 +423,20 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
     <>
       {/* 고정점 (천장) */}
       <group position={[0, 4.5, 0]}>
-        <RigidBody ref={fixed} {...segmentProps} type="fixed" />
+        <RigidBody ref={fixed} {...SEGMENT_PROPS} type="fixed" />
 
         {/* 줄 마디 1 */}
-        <RigidBody position={[0, -0.8, 0]} ref={j1} {...segmentProps}>
+        <RigidBody position={[0, -0.8, 0]} ref={j1} {...SEGMENT_PROPS}>
           <BallCollider args={[0.08]} />
         </RigidBody>
 
         {/* 줄 마디 2 */}
-        <RigidBody position={[0, -1.6, 0]} ref={j2} {...segmentProps}>
+        <RigidBody position={[0, -1.6, 0]} ref={j2} {...SEGMENT_PROPS}>
           <BallCollider args={[0.08]} />
         </RigidBody>
 
         {/* 줄 마디 3 */}
-        <RigidBody position={[0, -2.4, 0]} ref={j3} {...segmentProps}>
+        <RigidBody position={[0, -2.4, 0]} ref={j3} {...SEGMENT_PROPS}>
           <BallCollider args={[0.08]} />
         </RigidBody>
 
@@ -462,7 +444,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
         <RigidBody
           position={[0, -3.5, 0]}
           ref={lamp}
-          {...segmentProps}
+          {...SEGMENT_PROPS}
           type={dragged ? "kinematicPosition" : "dynamic"}
           lockTranslations={false}
         >
