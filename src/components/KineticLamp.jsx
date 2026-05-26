@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
-import { useEffect, useRef, useState, useMemo } from 'react';
-import { Canvas, extend, useFrame } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Canvas, extend, useFrame } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import {
   BallCollider,
   CuboidCollider,
@@ -9,27 +9,27 @@ import {
   RigidBody,
   useRopeJoint,
   useSphericalJoint,
-} from '@react-three/rapier';
-import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
-import * as THREE from 'three';
-import './KineticLamp.css';
+} from "@react-three/rapier";
+import { MeshLineGeometry, MeshLineMaterial } from "meshline";
+import * as THREE from "three";
+import "./KineticLamp.css";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 
 /* ── 랜야드 텍스처: 캔버스로 생성 ── */
 function createLanyardTexture() {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 256;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   // 세로 줄무늬 패턴 (앰버 계열)
   const grad = ctx.createLinearGradient(0, 0, 64, 0);
-  grad.addColorStop(0, '#B8762A');
-  grad.addColorStop(0.3, '#D1DCD6');
-  grad.addColorStop(0.5, '#E8C882');
-  grad.addColorStop(0.7, '#D1DCD6');
-  grad.addColorStop(1, '#B8762A');
+  grad.addColorStop(0, "#B8762A");
+  grad.addColorStop(0.3, "#D1DCD6");
+  grad.addColorStop(0.5, "#E8C882");
+  grad.addColorStop(0.7, "#D1DCD6");
+  grad.addColorStop(1, "#B8762A");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, 64, 256);
 
@@ -38,9 +38,16 @@ function createLanyardTexture() {
   return tex;
 }
 
-
 /* ── 조명 갓 3D 메시 ── */
-function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPointerOut, onPointerDown, onPointerUp }) {
+function LampShade({
+  isActivated = false,
+  dragged,
+  hovered,
+  onPointerOver,
+  onPointerOut,
+  onPointerDown,
+  onPointerUp,
+}) {
   const groupRef = useRef();
   const innerRef = useRef();
   const lightRef = useRef();
@@ -173,13 +180,13 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
       `,
       uniforms: {
         uTime: { value: 0 },
-        uColor: { value: new THREE.Color('#F3EDE4') }, // 은은하고 차분한 아이보리 웜화이트로 베이스 톤 변경
+        uColor: { value: new THREE.Color("#F3EDE4") }, // 은은하고 차분한 아이보리 웜화이트로 베이스 톤 변경
         uHovered: { value: 0 },
-        uActivated: { value: 0 } // 다크모드 점등 제어 유니폼
+        uActivated: { value: 0 }, // 다크모드 점등 제어 유니폼
       },
       transparent: true,
       depthWrite: false,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
   }, []);
 
@@ -195,12 +202,12 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
       rayShaderMaterial.uniforms.uHovered.value = THREE.MathUtils.lerp(
         rayShaderMaterial.uniforms.uHovered.value,
         hovered ? 1.0 : 0.0,
-        speed
+        speed,
       );
       rayShaderMaterial.uniforms.uActivated.value = THREE.MathUtils.lerp(
         rayShaderMaterial.uniforms.uActivated.value,
         activeTarget,
-        delta * 3.5 // 다크모드 전환 시 2~3초에 걸쳐 스르륵 빛이 차오르도록 함
+        delta * 3.5, // 다크모드 전환 시 2~3초에 걸쳐 스르륵 빛이 차오르도록 함
       );
     }
 
@@ -210,7 +217,7 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
       innerRef.current.material.opacity = THREE.MathUtils.lerp(
         innerRef.current.material.opacity,
         targetInnerOpacity,
-        speed
+        speed,
       );
     }
 
@@ -220,7 +227,7 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
       lightRef.current.intensity = THREE.MathUtils.lerp(
         lightRef.current.intensity,
         targetLightIntensity,
-        speed
+        speed,
       );
     }
 
@@ -228,7 +235,7 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
     if (groupRef.current) {
       const target = hovered ? 1.07 : 1.0;
       groupRef.current.scale.setScalar(
-        THREE.MathUtils.lerp(groupRef.current.scale.x, target, speed)
+        THREE.MathUtils.lerp(groupRef.current.scale.x, target, speed),
       );
     }
   });
@@ -265,20 +272,40 @@ function LampShade({ isActivated = false, dragged, hovered, onPointerOver, onPoi
       </mesh>
 
       {/* 하단 링 */}
-      <mesh geometry={ringGeom} position={[0, -0.55, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh
+        geometry={ringGeom}
+        position={[0, -0.55, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
         <meshStandardMaterial color="#E29543" roughness={0.3} metalness={0.5} />
       </mesh>
 
       {/* 상단 링 */}
-      <mesh geometry={topRingGeom} position={[0, 0.55, 0]} rotation={[Math.PI / 2, 0, 0]}>
+      <mesh
+        geometry={topRingGeom}
+        position={[0, 0.55, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+      >
         <meshStandardMaterial color="#C07020" roughness={0.3} metalness={0.5} />
       </mesh>
 
       {/* 빛 투사 원뿔 - 갓 내부 안쪽 깊은 곳에서부터 스며 나오도록 Y위치 상향 조정 */}
-      <mesh ref={coneRef} geometry={coneGeom} position={[0, -1.5, 0]} material={rayShaderMaterial} />
+      <mesh
+        ref={coneRef}
+        geometry={coneGeom}
+        position={[0, -1.5, 0]}
+        material={rayShaderMaterial}
+      />
 
       {/* 광원 */}
-      <pointLight ref={lightRef} color="#FFD090" intensity={6} distance={8} decay={2} position={[0, -0.3, 0]} />
+      <pointLight
+        ref={lightRef}
+        color="#FFD090"
+        intensity={6}
+        distance={8}
+        decay={2}
+        position={[0, -0.3, 0]}
+      />
     </group>
   );
 }
@@ -298,10 +325,10 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   const rot = new THREE.Vector3();
 
   const segmentProps = {
-    type: 'dynamic',
+    type: "dynamic",
     canSleep: true,
     colliders: false,
-    angularDamping: 5,   // 8 → 5: 너무 뻣뻣하지 않게
+    angularDamping: 5, // 8 → 5: 너무 뻣뻣하지 않게
     linearDamping: 5,
   };
 
@@ -315,7 +342,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
         new THREE.Vector3(),
         new THREE.Vector3(),
         new THREE.Vector3(),
-      ])
+      ]),
   );
 
   const [dragged, drag] = useState(false);
@@ -325,12 +352,15 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
-  useSphericalJoint(j3, lamp, [[0, 0, 0], [0, 0.55, 0]]); // 갓 상단면에 맞춤
+  useSphericalJoint(j3, lamp, [
+    [0, 0, 0],
+    [0, 0.55, 0],
+  ]); // 갓 상단면에 맞춤
 
   useEffect(() => {
     if (hovered) {
-      document.body.style.cursor = dragged ? 'grabbing' : 'grab';
-      return () => void (document.body.style.cursor = 'auto');
+      document.body.style.cursor = dragged ? "grabbing" : "grab";
+      return () => void (document.body.style.cursor = "auto");
     }
   }, [hovered, dragged]);
 
@@ -343,7 +373,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
       const t = -state.camera.position.z / dir.z;
       vec.copy(state.camera.position).addScaledVector(dir, t);
 
-      [lamp, j1, j2, j3, fixed].forEach(ref => ref.current?.wakeUp());
+      [lamp, j1, j2, j3, fixed].forEach((ref) => ref.current?.wakeUp());
       lamp.current?.setNextKinematicTranslation({
         x: vec.x - dragged.x,
         y: vec.y - dragged.y,
@@ -362,12 +392,20 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
 
     if (fixed.current) {
       // lerped 스무딩 적용
-      [j1, j2, j3].forEach(ref => {
+      [j1, j2, j3].forEach((ref) => {
         if (!ref.current) return;
         if (!ref.current.lerped)
-          ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
-        const dist = Math.max(0.05, Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())));
-        ref.current.lerped.lerp(ref.current.translation(), delta * (minSpeed + dist * (maxSpeed - minSpeed)));
+          ref.current.lerped = new THREE.Vector3().copy(
+            ref.current.translation(),
+          );
+        const dist = Math.max(
+          0.05,
+          Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())),
+        );
+        ref.current.lerped.lerp(
+          ref.current.translation(),
+          delta * (minSpeed + dist * (maxSpeed - minSpeed)),
+        );
         // Z를 0으로 고정
         ref.current.lerped.z = 0;
       });
@@ -384,7 +422,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
         curve.points[1].copy(j3Pos).setZ(0);
         curve.points[2].copy(j2Pos).setZ(0);
         curve.points[3].copy(j1Pos).setZ(0);
-        curve.points[4].set(fixedPos.x, fixedPos.y, 0);      // 천장 고정점
+        curve.points[4].set(fixedPos.x, fixedPos.y, 0); // 천장 고정점
         band.current.geometry.setPoints(curve.getPoints(64));
       }
 
@@ -397,7 +435,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
     }
   });
 
-  curve.curveType = 'chordal';
+  curve.curveType = "chordal";
 
   return (
     <>
@@ -425,7 +463,7 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
           position={[0, -3.5, 0]}
           ref={lamp}
           {...segmentProps}
-          type={dragged ? 'kinematicPosition' : 'dynamic'}
+          type={dragged ? "kinematicPosition" : "dynamic"}
           lockTranslations={false}
         >
           <CuboidCollider args={[1.1, 0.7, 0.01]} />
@@ -435,19 +473,19 @@ function Band({ isActivated = false, maxSpeed = 50, minSpeed = 10 }) {
             hovered={hovered}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
-            onPointerUp={e => {
+            onPointerUp={(e) => {
               e.target.releasePointerCapture(e.pointerId);
               drag(false);
             }}
-            onPointerDown={e => {
+            onPointerDown={(e) => {
               e.target.setPointerCapture(e.pointerId);
               const lampTrans = lamp.current?.translation();
               drag(
                 new THREE.Vector3(
                   e.point.x - (lampTrans?.x ?? 0),
                   e.point.y - (lampTrans?.y ?? 0),
-                  0
-                )
+                  0,
+                ),
               );
             }}
           />
@@ -476,13 +514,13 @@ export default function KineticLamp({
   fov = 18,
 }) {
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 768
+    () => typeof window !== "undefined" && window.innerWidth < 768,
   );
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -494,7 +532,11 @@ export default function KineticLamp({
         onCreated={({ gl }) => gl.setClearColor(new THREE.Color(0x000000), 0)}
       >
         <ambientLight intensity={1.2} />
-        <directionalLight position={[2, 4, 3]} intensity={1.5} color="#fff8e8" />
+        <directionalLight
+          position={[2, 4, 3]}
+          intensity={1.5}
+          color="#fff8e8"
+        />
 
         <Physics gravity={gravity} timeStep={1 / 60}>
           <Band isActivated={isActivated} />
