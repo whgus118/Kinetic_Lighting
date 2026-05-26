@@ -11,7 +11,7 @@ export default function Navigation() {
       setScrolled(y > 60);
 
       // 다크 섹션 감지 (이클립스 활성화 타이밍 동기화)
-      const darkStart = document.getElementById('section-eclipse');
+      const darkStart = document.getElementById('section-timeline-shade');
       if (darkStart) {
         setIsDark(darkStart.classList.contains('active'));
       }

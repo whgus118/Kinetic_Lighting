@@ -1,9 +1,11 @@
 .timeline {
   position: relative;
-  min-height: 120vh; /* 고정스크롤 탈출 시 스크롤 거리를 최적화하여 피로도 감소 (160vh -> 120vh) */
+  min-height: 100vh; /* 고정스크롤 작동 시 하단 검은색 누출 방지를 위해 100vh 뷰포트 높이 철저 보장 */
   background-color: var(--color-bg-ivory);
   transition: background-color 0.4s ease;
-  padding-bottom: 8rem; /* 고정 해제 후 하단 여백의 길이를 줄여 빠르게 다음 섹션으로 연결 */
+  padding-bottom: 0; /* 여백 완전 소멸로 스크롤 유격 최소화 유지 */
+  margin-bottom: 0; /* 진입 초기(아이보리 배경) 하단부 검은색 노출을 원천 차단하기 위해 마진 복원 */
+  z-index: 30; /* 💡 ScrollBridge(z-index: 20)보다 높게 배치하여 암전 연출 도중 절대 가려지지 않도록 최상단 고수 */
 }
 
 /* 진입 시 - 1.6초 딜레이 후 0.8초 동안 부드럽게 다크 배경화 */
@@ -118,11 +120,13 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  opacity: 0;
   transition: opacity 0.4s ease;
 }
 
 /* 전개 시 (진입) - 1.6초 딜레이 유지 */
 .timeline.active .timeline__features {
+  opacity: 1;
   transition: opacity 0.8s ease 1.6s;
 }
 

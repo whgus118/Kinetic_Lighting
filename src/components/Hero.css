@@ -244,15 +244,29 @@
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   writing-mode: vertical-lr;
-  color: var(--color-text-forest, #1B2B22);
-  opacity: 0.4;
+  color: rgb(
+    calc(27 + (209 - 27) * var(--global-timeline-ratio, 0)),
+    calc(43 + (220 - 43) * var(--global-timeline-ratio, 0)),
+    calc(34 + (214 - 34) * var(--global-timeline-ratio, 0))
+  );
+  opacity: calc(0.4 + 0.6 * var(--global-timeline-ratio, 0)); /* 어두운 배경에서는 더 잘 보이도록 불투명도 증가 */
+  transition: 
+    color 1.2s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)) calc(1.6s * var(--global-timeline-ratio, 0)), 
+    opacity 1.2s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)) calc(1.6s * var(--global-timeline-ratio, 0));
 }
 
 .hero__scroll-line {
   width: 1px;
   height: 60px;
-  background-color: var(--color-text-forest, #1B2B22);
-  opacity: 0.2;
+  background-color: rgb(
+    calc(27 + (209 - 27) * var(--global-timeline-ratio, 0)),
+    calc(43 + (220 - 43) * var(--global-timeline-ratio, 0)),
+    calc(34 + (214 - 34) * var(--global-timeline-ratio, 0))
+  );
+  opacity: calc(0.2 + 0.3 * var(--global-timeline-ratio, 0));
+  transition: 
+    background-color 1.2s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)) calc(1.6s * var(--global-timeline-ratio, 0)), 
+    opacity 1.2s var(--ease-smooth, cubic-bezier(0.16, 1, 0.3, 1)) calc(1.6s * var(--global-timeline-ratio, 0));
 }
 
 /* ==========================================================================

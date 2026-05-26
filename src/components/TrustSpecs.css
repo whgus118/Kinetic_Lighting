@@ -1,5 +1,6 @@
 .trust {
   padding: var(--section-padding-y) var(--section-padding-x);
+  padding-top: calc(var(--section-padding-y) + 8rem);
   min-height: 100vh;
 }
 

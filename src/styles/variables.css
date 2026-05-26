@@ -1,0 +1,52 @@
+/* ============================================
+   레비테 디자인 시스템 — variables.css
+   디자인 토큰 (색상, 타이포그래피, 스케일 등)
+ ============================================ */
+
+:root {
+  /* ── 색상 시스템 ── */
+  --color-bg-ivory: #F7F4F0;
+  --color-text-forest: #1B2B22;
+
+  --color-bg-abyss: #0D1310;
+  --color-text-sage: #D1DCD6;
+
+  --color-accent-amber: #E29543;
+  --color-accent-amber-glow: rgba(226, 149, 67, 0.35);
+  --color-accent-amber-soft: rgba(226, 149, 67, 0.15);
+
+  /* ── 타이포그래피 ── */
+  --font-body: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-title: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* ── 폰트 크기 스케일 (최소 12px 준수) ── */
+  --text-xs: clamp(0.75rem, 1vw, 0.875rem);      /* 12~14px */
+  --text-sm: clamp(0.875rem, 1.2vw, 1rem);        /* 14~16px */
+  --text-base: clamp(1rem, 1.5vw, 1.125rem);      /* 16~18px */
+  --text-lg: clamp(1.125rem, 2vw, 1.375rem);      /* 18~22px */
+  --text-xl: clamp(1.375rem, 3vw, 2rem);          /* 22~32px */
+  --text-2xl: clamp(2rem, 5vw, 3.5rem);           /* 32~56px */
+  --text-3xl: clamp(2.5rem, 7vw, 5rem);           /* 40~80px */
+
+  /* ── 간격 시스템 ── */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 2rem;
+  --space-lg: 4rem;
+  --space-xl: 8rem;
+
+  /* ── 접근성 ── */
+  --min-touch-target: 44px;
+
+  /* ── 트랜지션 ── */
+  --ease-smooth: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out: cubic-bezier(0.0, 0, 0.2, 1);
+  --transition-slow: 0.8s var(--ease-smooth);
+  --transition-base: 0.5s var(--ease-smooth);
+  --transition-fast: 0.3s var(--ease-out);
+
+  /* ── 레이아웃 ── */
+  --container-max: 1280px;
+  --section-padding-x: clamp(1.5rem, 5vw, 6rem);
+  --section-padding-y: clamp(5rem, 10vw, 10rem);
+}
